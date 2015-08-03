@@ -15,6 +15,7 @@ namespace memory_mapped_file
         size_t mapped_size() const { return mapped_size_; }
         size_t file_size() const { return file_size_; }
         void unmap();
+        void close();
         bool is_open() const
         {
             return file_handle_ !=
@@ -48,8 +49,8 @@ namespace memory_mapped_file
     class read_only_mmf: public base_mmf
     {
     public:
-        explicit read_only_mmf(char const* pathname,
-            bool map_all = true);
+        explicit read_only_mmf(char const* pathname = 0, bool map_all = true);
+        void open(char const* pathname, bool map_all = true);
         char const* data() const { return data_; }
         void map(size_t offset = 0, size_t size = 0);
     };
@@ -71,9 +72,12 @@ namespace memory_mapped_file
     class writable_mmf: public base_mmf
     {
     public:
-        explicit writable_mmf(char const* pathname,
-            mmf_exists_mode exists_mode,
-            mmf_doesnt_exist_mode doesnt_exist_mode);
+        explicit writable_mmf(char const* pathname = 0,
+            mmf_exists_mode exists_mode = if_exists_fail,
+            mmf_doesnt_exist_mode doesnt_exist_mode = if_doesnt_exist_create);
+        void open(char const* pathname,
+            mmf_exists_mode exists_mode = if_exists_fail,
+            mmf_doesnt_exist_mode doesnt_exist_mode = if_doesnt_exist_create);
         char* data() { return data_; }
         void map(size_t offset = 0, size_t size = 0);
         bool flush();

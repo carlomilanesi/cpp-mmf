@@ -38,12 +38,20 @@ namespace memory_mapped_file
 
     base_mmf::~base_mmf()
     {
+        close();
+    }
+
+    void base_mmf::close()
+    {
         unmap();
     #if defined(_WIN32)
         ::CloseHandle(file_handle_);
+        file_handle_ = (void*)-1;
     #else
         ::close(file_handle_);
+        file_handle_ = -1;
     #endif
+        file_size_ = 0;
     }
 
     void base_mmf::unmap()
@@ -55,6 +63,7 @@ namespace memory_mapped_file
     #if defined(_WIN32)
             ::UnmapViewOfFile(real_data);
             ::CloseHandle(file_mapping_handle_);
+            file_mapping_handle_ = INVALID_HANDLE_VALUE;
     #else
             size_t real_mapped_size = mapped_size_ + (data_ - real_data);
             ::munmap(const_cast<char*>(real_data), real_mapped_size);
@@ -78,9 +87,15 @@ namespace memory_mapped_file
     #endif
     }
 
-    read_only_mmf::read_only_mmf(
-        char const* pathname, bool map_all)
+    read_only_mmf::read_only_mmf(char const* pathname, bool map_all)
     {
+        open(pathname, map_all);
+    }
+
+    void read_only_mmf::open(char const* pathname, bool map_all)
+    {
+        if (! pathname) return;
+        if (is_open()) close();
     #if defined(_WIN32)
         file_handle_ = ::CreateFile(pathname, GENERIC_READ,
             FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
@@ -93,7 +108,7 @@ namespace memory_mapped_file
         file_size_ = query_file_size_();
         if (map_all) map();
     }
-
+    
     void read_only_mmf::map(
         size_t offset, size_t requested_size)
     {
@@ -127,6 +142,15 @@ namespace memory_mapped_file
         memory_mapped_file::mmf_exists_mode exists_mode,
         memory_mapped_file::mmf_doesnt_exist_mode doesnt_exist_mode)
     {
+        open(pathname, exists_mode, doesnt_exist_mode);
+    }
+
+    void writable_mmf::open(char const* pathname,
+        memory_mapped_file::mmf_exists_mode exists_mode,
+        memory_mapped_file::mmf_doesnt_exist_mode doesnt_exist_mode)
+    {
+        if (! pathname) return;
+        if (is_open()) close();
     #if defined(_WIN32)
         int win_open_mode;
         

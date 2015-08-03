@@ -293,9 +293,9 @@ img {
 <body>
 <h1>Memory-Mapped File C++ Library Tutorial and Reference</h1>
 <h2>Purpose</h2>
-<p>This is a library for C++98 language and successive versions, to handle files
-as arrays of bytes, exploiting system calls provided by Microsoft Windows
-and by POSIX-compliant operating systems.</p>
+<p>This is a library, for the C++98 language and its successive versions,
+to handle files as arrays of bytes, exploiting system calls provided
+by POSIX-compliant operating systems and by Microsoft Windows.</p>
 <h2>Contents</h2>
 <p>This package is made of one HTML documentation file,
 and two C++ files:</p>
@@ -303,29 +303,11 @@ and two C++ files:</p>
 <li><code>manual.html</code>: This document, in HTML format.</li>
 <li><code>memory_mapped_file.hpp</code>: Header file, to be included by every source file
   that needs to read or to write a memory-mapped file.</li>
-<li><code>memory_mapped_file.cpp</code>: Implementation file, to link into the executable.</li>
+<li><code>memory_mapped_file.cpp</code>: Implementation file, to be compiled separately
+  and to be linked into the executable.</li>
 </ul>
-<p>Only Microsoft Windows and POSIX-compliant operating systems
-(like Unix, Linux, and Mac OS X) are supported.
-The source files contain several code under conditional compilation.
-If the <code>_WIN32</code> macro is defined, then the Microsoft Windows API is used;
-otherwise the POSIX API is used.</p>
-<p>The header file contains only the namespace <code>memory_mapped_file</code>,
-containing the definition of the following items:</p>
-<ul>
-<li>The <code>mmf_granularity</code> function: It allows to get operating system allocation
-  granularity (for advanced uses).</li>
-<li>The <code>base_mmf</code> abstract class: It contains what is common
-  between the other classes. It cannot be instantiated.</li>
-<li>The <code>read_only_mmf</code> class: It is used to access an already existing
-  file only for reading it.</li>
-<li>The <code>writable_mmf</code> class: It is used to access an already existing
-  or a not yet existing file for both reading and writing it.</li>
-<li>The <code>mmf_exists_mode</code> enumeration: Options for creating a writable
-  memory-mapped-file based on an already existing file.</li>
-<li>The <code>mmf_doesnt_exist_mode</code> enumeration: Options for creating a writable
-  memory-mapped-file based on a not yet existing file.</li>
-</ul>
+<p>Only POSIX-compliant operating systems (like Unix, Linux, and Mac OS X)
+and Microsoft Windows are supported.</p>
 <h2>Tutorial</h2>
 <h3>Example</h3>
 <p>First of all, a complete example of use of the library is presented.
@@ -386,32 +368,33 @@ int main()
 
     // Copy the first file, overwriting the second file,
     // if it already exists.
-    // It should print always 0, meaning success.
+    // It should always print 0, meaning success.
     cout &lt;&lt; CopyFile(&quot;memory_mapped_file.hpp&quot;, &quot;copy.tmp&quot;, true) &lt;&lt; endl;
 
     // Copy the first file to the second file,
     // but only if the second file does not already exist.
-    // It should print always 3, meaning failure,
+    // It should always print 3, meaning failure to open the second file,
     // as here the second file already exists.
     cout &lt;&lt; CopyFile(&quot;memory_mapped_file.hpp&quot;, &quot;copy.tmp&quot;, false) &lt;&lt; endl;
 }
 </code></pre>
 
-<p>To compile and run the example, in a Windows environment
-with Visual C++ installed, from a command prompt, type:</p>
-<pre><code>cl /nologo /EHsc example.cpp memory_mapped_file.cpp /Feexample.exe
-</code></pre>
-
-<p>and then</p>
-<pre><code>example.exe
-</code></pre>
-
-<p>Instead, in a POSIX environment with GCC installed, from a shell, type:</p>
+<p>To compile and run the example, in a POSIX environment with GCC installed,
+from a shell, type:</p>
 <pre><code>g++ example.cpp memory_mapped_file.cpp -o example
 </code></pre>
 
 <p>and then</p>
 <pre><code>./example
+</code></pre>
+
+<p>Instead, in a Windows environment with Visual C++ installed,
+from a command prompt, type:</p>
+<pre><code>cl /nologo /EHsc example.cpp memory_mapped_file.cpp /Feexample.exe
+</code></pre>
+
+<p>and then</p>
+<pre><code>example.exe
 </code></pre>
 
 <p>In both environments the program should print,
@@ -449,24 +432,80 @@ int main()
 }
 </code></pre>
 
-<p>To compile it using Visual C++, type the following command line:</p>
-<pre><code>cl /nologo /EHsc memory_mapped_file.cpp tutorial.cpp /Fetutorial.exe
-</code></pre>
-
 <p>To compile it using using GCC, type the following command line:</p>
 <pre><code>g++ memory_mapped_file.cpp tutorial.cpp -o tutorial
 </code></pre>
 
-<p>Of course, this program does nothing, as it has an empty <code>main</code> function.
-The following versions will change only the body of the <code>main</code> function.</p>
+<p>To compile it using Visual C++, type the following command line:</p>
+<pre><code>cl /nologo /EHsc memory_mapped_file.cpp tutorial.cpp /Fetutorial.exe
+</code></pre>
+
 <p>The <code>create_file</code> function creates in the current directory a file
 named <code>a.txt</code>, containing only the 13 bytes <code>Hello, world!</code>.</p>
-<h3>Opening and mapping a whole file</h3>
+<p>Of course, this program does nothing, as it has an empty <code>main</code> function.</p>
+<p>The following versions will change only the body of the <code>main</code> function.</p>
+<h3>Opening and closing a file</h3>
 <p>Write the following contents for the <code>main</code> function
 of the <code>tutorial.cpp</code> file:</p>
 <pre><code>    cout &lt;&lt; boolalpha;
     create_file();
-    read_only_mmf mmf(pathname);
+    read_only_mmf mmf;
+    cout &lt;&lt; mmf.is_open() &lt;&lt; endl;
+    cout &lt;&lt; mmf.file_handle() &lt;&lt; endl;
+    cout &lt;&lt; mmf.file_size() &lt;&lt; &quot; &quot; &lt;&lt; mmf.offset() &lt;&lt; &quot; &quot;
+        &lt;&lt; mmf.mapped_size() &lt;&lt; endl;
+    mmf.open(pathname, false);
+    cout &lt;&lt; mmf.is_open() &lt;&lt; endl;
+    cout &lt;&lt; mmf.file_handle() &lt;&lt; endl;
+    cout &lt;&lt; mmf.file_size() &lt;&lt; &quot; &quot; &lt;&lt; mmf.offset() &lt;&lt; &quot; &quot;
+        &lt;&lt; mmf.mapped_size() &lt;&lt; endl;
+    mmf.close();
+    cout &lt;&lt; mmf.is_open() &lt;&lt; endl;
+    cout &lt;&lt; mmf.file_handle() &lt;&lt; endl;
+    cout &lt;&lt; mmf.file_size() &lt;&lt; &quot; &quot; &lt;&lt; mmf.offset() &lt;&lt;  &quot; &quot;
+        &lt;&lt; mmf.mapped_size() &lt;&lt; endl;
+</code></pre>
+
+<p>When it is run, it should print:</p>
+<pre><code>false
+&lt;OS dependent invalid value&gt;
+0 0 0
+true
+&lt;OS dependent valid value&gt;
+13 0 0
+false
+&lt;OS dependent invalid value&gt;
+0 0 0
+</code></pre>
+
+<p>The first statement ensures that <code>bool</code> expressions are printed as
+<code>true</code> or <code>false</code>.</p>
+<p>The second statement ensures that there is a data file to use.</p>
+<p>The third statement defines and initializes an object owning
+a memory-mapped-file for reading it, without specifying which file to use.</p>
+<p>Therefore, no file is opened, and so the call to <code>is_open</code>
+returns <code>false</code>, the call to <code>file_handle</code> returns an invalid file handle,
+the call to <code>file_size</code>, <code>offset</code>, and <code>mapped_size</code> return <code>0</code>.</p>
+<p>Then the call to the <code>open</code> member function tries to open
+the specified file (searching it from the current directory),
+without mapping its contents in the address space of the process.</p>
+<p>Presumably it finds such file and opens it, and therefore
+the next call to <code>is_open</code> should return <code>true</code>,
+and the call to <code>file_handle</code> should return an operating-system-dependent
+value of a handle for the underlying file.
+Such handle can be used, for example, to lock the file for exclusive use,
+using operating system calls.</p>
+<p>The call to <code>file_size</code> should return the length of the opened file, i.e. <code>13</code>,
+but, as the file is still not mapped to memory,
+the calls to <code>offset</code> and <code>mapped_size</code> still return <code>0</code>.</p>
+<p>Then the underlying file is explicitly closed, by calling <code>close</code>,
+restoring the file to the condition before the opening of the file.</p>
+<h3>Failing to open a file</h3>
+<p>Write the following contents for the <code>main</code> function
+of the <code>tutorial.cpp</code> file:</p>
+<pre><code>    cout &lt;&lt; boolalpha;
+    read_only_mmf mmf;
+    mmf.open(&quot;x&quot;, false);
     cout &lt;&lt; mmf.is_open() &lt;&lt; endl;
     cout &lt;&lt; mmf.file_handle() &lt;&lt; endl;
     cout &lt;&lt; mmf.file_size() &lt;&lt; endl;
@@ -474,72 +513,22 @@ of the <code>tutorial.cpp</code> file:</p>
     cout &lt;&lt; mmf.mapped_size() &lt;&lt; endl;
 </code></pre>
 
-<p>When it is run, it should print:</p>
-<pre><code>true
-&lt;OS dependent value&gt;
-13
-0
-13
-</code></pre>
-
-<p>The first statement ensures that <code>bool</code> expressions are printed as
-<code>true</code> or <code>false</code>.</p>
-<p>The second statement ensures that there is a data file to use.</p>
-<p>The third statement defines and initializes an object owning
-a memory-mapped-file. The constructor of such object tries to open
-the specified file (searching it from the current directory)
-and to map its contents in its address space.</p>
-<p>Presumably it finds such file and can open it, and therefore
-the call to <code>is_open</code> should return <code>true</code>.</p>
-<p>The call to <code>file_handle</code> should return an operating-system-dependent value
-to handle the underlying file.
-For example, it can be used to lock the file for exclusive use,
-using operating system calls.</p>
-<p>The call to <code>file_size</code> should return the length of the opened file, i.e. <code>13</code>.</p>
-<p>By default, the whole contents of the file is mapped to memory.
-Therefore the call to <code>offset</code>, that returns the starting point
-of the mapping inside the file, should return <code>0</code>,
-i.e. there is no offset.</p>
-<p>As the whole file is mapped, the call to <code>mapped_size</code>,
-that returns the length of the mapped portion of the file,
-should return the length of the file, i.e. <code>13</code>.</p>
-<h3>Failing to open a file</h3>
-<p>Now replace the third line of the <code>main</code> function with the following one,
-where <code>pathname</code> is replaced by <code>&quot;x&quot;</code>:</p>
-<pre><code>    read_only_mmf mmf(&quot;x&quot;);
-</code></pre>
-
-<p>When it is run, it should print:</p>
+<p>When it is run, assuming the current directory does not contain
+a file named <code>x</code>, it should print:</p>
 <pre><code>false
-&lt;OS dependent value&gt;
+&lt;OS dependent invalid value&gt;
 0
 0
 0
 </code></pre>
 
-<p>Now the call to <code>is_open</code> returns <code>false</code>, as the specified file
-cannot be opened.
-The call to <code>file_handle</code> returns an operating-system-dependent value
-representing an invalid file handle.
-The last three function calls return <code>0</code>,
-as the underlying file has not been opened.</p>
-<p>The <code>read_only_mmf</code> class contains no function to open or close
-explicitly a file.
-The underlying file can be opened only by the constructor,
-using the specified pathname.
-If the opening of such file fails, the object becomes useless.
-The <code>is_open</code> function is useful to check if the object initialization
-was successful.
-The underlying file is closed only implicitly by the destructor.</p>
+<p>Now the <code>open</code> call fails, as the specified file cannot be opened.</p>
 <h3>Mapping and un-mapping</h3>
 <p>Now replace all the contents of the <code>main</code> function with the following lines:</p>
 <pre><code>    cout &lt;&lt; boolalpha;
     create_file();
-    read_only_mmf mmf(pathname, false);
-    cout &lt;&lt; mmf.is_open() &lt;&lt; endl;
-    cout &lt;&lt; mmf.file_size() &lt;&lt; endl;
-    cout &lt;&lt; mmf.offset() &lt;&lt; endl;
-    cout &lt;&lt; mmf.mapped_size() &lt;&lt; endl;
+    read_only_mmf mmf;
+    mmf.open(pathname, false);
     mmf.map(2, 6);
     cout &lt;&lt; mmf.is_open() &lt;&lt; endl;
     cout &lt;&lt; mmf.file_size() &lt;&lt; endl;
@@ -555,10 +544,6 @@ The underlying file is closed only implicitly by the destructor.</p>
 <p>When it is run, it should print:</p>
 <pre><code>true
 13
-0
-0
-true
-13
 2
 6
 true
@@ -567,21 +552,17 @@ true
 0
 </code></pre>
 
-<p>By passing to the constructor the optional parameter <code>false</code>,
-the file is opened but not mapped.
-Therefore, in his example, although the <code>is_open</code> function always returns
-<code>true</code>, and the <code>file_size</code> function always returns the correct file size,
-the first call to <code>mapped_size</code> returns <code>0</code>, as no mapping is done.</p>
-<p>The call to the <code>map</code> member function creates a mapping from the offset
-specified by the first argument, for the length specified
-by the second argument.
+<p>The call to the <code>map</code> member function creates a mapping
+to memory of the file contents from the offset specified by the first argument,
+for the length specified by the second argument.
 This appears also by the ensuing calls to <code>offset</code> and <code>mapped_size</code>, that
 return <code>2</code> and <code>6</code>, respectively.</p>
 <p>Then, by calling the <code>unmap</code> member function, the mapping is undone.</p>
 <h3>More on mapping</h3>
 <p>Now replace all the contents of the <code>main</code> function with the following lines:</p>
 <pre><code>    create_file();
-    read_only_mmf mmf(pathname, false);
+    read_only_mmf mmf;
+    mmf.open(pathname, false);
     mmf.map(2);
     cout &lt;&lt; mmf.offset() &lt;&lt; endl;
     cout &lt;&lt; mmf.mapped_size() &lt;&lt; endl;
@@ -602,17 +583,66 @@ return <code>2</code> and <code>6</code>, respectively.</p>
 3
 </code></pre>
 
-<p>First, notice that the second call to <code>map</code> is performed without
-before calling <code>unmap</code>. Actually <code>unmap()</code> is implicitly called
+<p>First, notice that <code>map</code> is called three times and <code>unmap</code> is never called.
+Actually <code>unmap</code> is implicitly called
 by the <code>map</code> function and by the destructor.</p>
 <p>Then, notice that <code>map</code> may have only one argument or no arguments,
 as they have both the default value <code>0</code>.</p>
 <p>Then, notice that the <code>0</code> value for the second argument of <code>map</code> doesn't mean
 that the mapping will have zero length (that is impossible),
 but that it will extend up to the length of the file, if possible.</p>
-<p>Then, notice that even if the specified offset plus the specified length
+<p>At last, notice that even if the specified offset plus the specified length
 exceeds the length of the file, the mapping extends anyway up to the length
 of the file, as shown by the last printed line.</p>
+<h3>Implicit opening and mapping</h3>
+<p>Now replace all the contents of the <code>main</code> function with the following lines:</p>
+<pre><code>    cout &lt;&lt; boolalpha;
+    create_file();
+    read_only_mmf mmf1(pathname, false);
+    cout &lt;&lt; mmf1.is_open() &lt;&lt; endl;
+    cout &lt;&lt; mmf1.file_size() &lt;&lt; endl;
+    cout &lt;&lt; mmf1.offset() &lt;&lt; endl;
+    cout &lt;&lt; mmf1.mapped_size() &lt;&lt; endl;
+
+    read_only_mmf mmf2;
+    mmf2.open(pathname);
+    cout &lt;&lt; mmf2.is_open() &lt;&lt; endl;
+    cout &lt;&lt; mmf2.file_size() &lt;&lt; endl;
+    cout &lt;&lt; mmf2.offset() &lt;&lt; endl;
+    cout &lt;&lt; mmf2.mapped_size() &lt;&lt; endl;
+
+    read_only_mmf mmf3(pathname);
+    cout &lt;&lt; mmf3.is_open() &lt;&lt; endl;
+    cout &lt;&lt; mmf3.file_size() &lt;&lt; endl;
+    cout &lt;&lt; mmf3.offset() &lt;&lt; endl;
+    cout &lt;&lt; mmf3.mapped_size() &lt;&lt; endl;
+</code></pre>
+
+<p>When it is run, it should print:</p>
+<pre><code>true
+13
+0
+0
+true
+13
+0
+13
+true
+13
+0
+13
+</code></pre>
+
+<p>When the object <code>mmf1</code> is constructed, it gets two arguments that
+cause to open to specified file, but not to map its contents to memory.
+This avoids to call separately the constructor and the <code>open</code> function.</p>
+<p>When the object <code>mmf2</code> is opened, its contents is implicitly entirely
+mapped to memory.
+This avoids to call separately the <code>open</code> and <code>map</code> functions.</p>
+<p>When the object <code>mmf3</code> is constructed, it is implicitly opened,
+and its contents is implicitly entirely mapped to memory.
+This avoids to call separately the constructor, and the <code>open</code>
+and <code>map</code> functions.</p>
 <h3>Reading the file contents</h3>
 <p>Now replace all the contents of the <code>main</code> function with the following lines:</p>
 <pre><code>    create_file();
@@ -630,36 +660,20 @@ llo, wor
 0
 </code></pre>
 
-<p>If the <code>map</code> call succeeds, every ensuing calls to <code>data</code> return
+<p>If the mapping succeeds, every ensuing calls to <code>data</code> return
 a pointer to the mapped buffer starting at the specified offset.</p>
 <p>But the <code>map</code> function may fail, for several reasons.
 For example, no mapping is possible if the file is not opened,
 or if the specified offset is equal to or greater than the file size,
 or if there is not enough address space to map all the specified range.</p>
 <p>If the <code>map</code> call fails, every ensuing call to <code>data</code> returns a null pointer;
-therefore, every time you call <code>map</code>, you should check the value returned
-by <code>data</code> or by <code>mapped_size</code>, before dereferencing the pointer
-returned by <code>data</code>.</p>
-<h3>Mapping granularity</h3>
-<p>Operating systems do not allow to map files to memory starting from every
-specified byte. They require that the offset be a multiple of a number,
-named <em>granularity</em>, that is dependent on the operating system,
-and typically may vary from 4 KB to 64 KB.</p>
-<p>To avoid bothering users with such technicality, this library takes care
-of mapping memory internally from the nearest boundary.
-For example, if the granularity is 65536, and for a 10 MB long file a mapping
-is requested from 500000 to 800000,
-the memory actually mapped by the operating system is from 458752
-to a number somewhat greater than 800000,
-but the <code>offset</code> function will return 500000,
-and the <code>mapped_size</code> function will return 300000.</p>
-<p>To allow the user to take granularity into account,
-there is a global function named <code>mmf_granularity</code>,
-that returns such granularity size.</p>
+therefore, every time you try to map a file, implicitly or by calling <code>map</code>,
+you should check the value returned by <code>data</code> or by <code>mapped_size</code>,
+before dereferencing the pointer returned by <code>data</code>.</p>
 <h3>Read-only access</h3>
 <p>Now replace all the contents of the <code>main</code> function with the following lines:</p>
 <pre><code>    create_file();
-    read_only_mmf mmf(pathname, false);
+    read_only_mmf mmf(pathname);
     cout &lt;&lt; mmf.data()[0];
     mmf.data()[0] = 'a';
 </code></pre>
@@ -696,32 +710,7 @@ Hello, w
 <p>It means that the file has been opened, its size is 13 bytes,
 all the file has been mapped, and its first <code>8</code> characters are <code>Hello, w</code>.</p>
 <p>As it appears, this object can be used just like a read-only memory mapped
-file, except for the constructor and except for something we'll see later.</p>
-<p>Actually, most that can be done using a <code>read_only_mmf</code> object
-can also be done using a <code>writable_mmf</code> object.</p>
-<p>Of course, when a file is to be created or changed, it is required to use
-the <code>writable_mmf</code> class.
-Instead, when a file is only to be read, both classes could be used.
-Nevertheless, using <code>read_only_mmf</code> has the following advantages:</p>
-<ul>
-<li><strong>Reading read-only files or files shared only for reading</strong>:
-  <code>writable_mmf</code> objects require to open the specified file
-  in read/write mode, and the operating system prevents such operation
-  on files marked as <em>read-only</em> or shared only for reading.
-  The only way to read a read-only file or a file shared only for reading
-  is to use a <code>read_only_mmf</code> object.</li>
-<li><strong>Simpler API</strong>: As <code>read_only_mmf</code> cannot change to specified file,
-  it has fewer features, and therefore it is simpler to learn and use.</li>
-<li><strong>No risk of accidental change</strong>: As <code>writable_mmf</code> objects
-  open the specified file in read/write mode, a logically erroneous operation
-  or an undefined behavior operation could apply unwanted changes
-  to the contents of such file.
-  As <code>read_only_mmf</code> objects open the specified file in read-only mode,
-  the operating system prevents any subsequent attempt to change it.</li>
-<li><strong>Possibly more efficient</strong>: Operating systems may use more efficient
-  buffering algorithms for read-only files, used by <code>read_only_mmf</code> objects,
-  than for read/write files, used by <code>writable_mmf</code> objects.</li>
-</ul>
+file, except for the constructor.</p>
 <h3>Read/write mapping mode</h3>
 <p>We have already seen one usage instance of the <code>writable_mmf</code> class.
 There are several other ways to create such object,
@@ -838,6 +827,30 @@ and <code>mapped_size</code> returns <code>13</code>.</p>
 therefore such file is not opened, and so <code>is_open</code> returns <code>false</code>.</p>
 <p>Case 4 (&quot;Map all or fail&quot;) is useful when it is needed
 to change a not-so-large existing file, to be handled as a single string.</p>
+<p>Of course, when a file is to be created or changed, it is required to use
+the <code>writable_mmf</code> class.
+Instead, when a file is only to be read, also the <code>read_only_mmf</code> classes
+could be used.
+Nevertheless, using <code>read_only_mmf</code> has the following advantages:</p>
+<ul>
+<li><strong>Reading read-only files or files shared only for reading</strong>:
+  <code>writable_mmf</code> objects require to open the specified file
+  in read/write mode, and the operating system prevents such operation
+  on files marked as <em>read-only</em> or shared only for reading.
+  The only way to read a read-only file or a file shared only for reading
+  is to use a <code>read_only_mmf</code> object.</li>
+<li><strong>Simpler API</strong>: As <code>read_only_mmf</code> cannot change to specified file,
+  it has fewer features, and therefore it is simpler to learn and use.</li>
+<li><strong>No risk of accidental change</strong>: As <code>writable_mmf</code> objects
+  open the specified file in read/write mode, a logically erroneous operation
+  or an undefined behavior operation could apply unwanted changes
+  to the contents of such file.
+  As <code>read_only_mmf</code> objects open the specified file in read-only mode,
+  the operating system prevents any subsequent attempt to change it.</li>
+<li><strong>Possibly more efficient</strong>: Operating systems may use more efficient
+  buffering algorithms for read-only files, used by <code>read_only_mmf</code> objects,
+  than for read/write files, used by <code>writable_mmf</code> objects.</li>
+</ul>
 <h3>Read/write access</h3>
 <p>Up to now, in our examples, no file has been changed by a memory-mapped-file.</p>
 <p>Now replace all the contents of the <code>main</code> function with the following lines:</p>
@@ -870,7 +883,7 @@ saved to the file sometime no later than when the current scope is closed.</p>
 <h3>Flushing writes</h3>
 <p>Such effective write to the file is handled by the operating system,
 and, for efficiency reasons, usually it does not happen immediately,
-as shown by replacing all the contents of the <code>main</code> function
+as it is shown by replacing all the contents of the <code>main</code> function
 with the following lines:</p>
 <pre><code>    create_file();
     writable_mmf mmf(pathname,
@@ -892,193 +905,360 @@ and look into file &quot;a.txt&quot;, you should find it has the following conte
 <pre><code>Xello, world!&quot;
 </code></pre>
 
-<p>As you can see, the <code>Y</code> character has not been written to the file.</p>
+<p>As you can see, the 'X' character has been written to the file,
+thanks to the call to <code>flush</code>, but the <code>Y</code> character is not.</p>
 <p>This brutal procedure is necessary to show the effect,
 because if you terminate the process in any other way,
 the operating system is still able to save the buffer to persistent storage.</p>
-<p>The <code>flush</code> call, albeit more efficient that closing and reopening the file,
+<p>The <code>flush</code> call, albeit more efficient than closing and reopening the file,
 is rather inefficient, though, because it writes data to physical storage,
 and so it should be used only when data consistency is required
 even in case of a power failure or an operating system crash.</p>
 <h1>Reference</h1>
+<h2>Introduction</h2>
+<p>To support several operating systems, the source files contain several code
+portions under conditional compilation.
+If the <code>_WIN32</code> macro is defined, then the Microsoft Windows API is used;
+otherwise the POSIX API is used, allowing compilation for Linux, Unix,
+MAC OS X, and other POSIX-compliant operating systems.</p>
+<p>The header file contains only the namespace <code>memory_mapped_file</code>,
+containing the definition of the following items:</p>
+<ul>
+<li>The <code>mmf_granularity</code> function: It allows to get operating system allocation
+  granularity (for advanced uses).</li>
+<li>The <code>base_mmf</code> abstract class: It contains what is common
+  between the other classes. It cannot be instantiated.</li>
+<li>The <code>read_only_mmf</code> class: It is used to access an already existing
+  file only for reading it.</li>
+<li>The <code>writable_mmf</code> class: It is used to access an already existing
+  or a not yet existing file for both reading and writing it.</li>
+<li>The <code>mmf_exists_mode</code> enumeration: Options for creating a writable
+  memory-mapped-file based on an already existing file.</li>
+<li>The <code>mmf_doesnt_exist_mode</code> enumeration: Options for creating a writable
+  memory-mapped-file based on a not yet existing file.</li>
+</ul>
 <h2>The <code>mmf_granularity</code> function</h2>
 <p>Scope: namespace <code>memory_mapped_file</code>.</p>
+<p>Operating systems do not allow to map files to memory starting from every
+specified byte. They require that the offset be a multiple of a number,
+named <em>granularity</em>, that is dependent on the operating system,
+and typically may vary from 4 KiB to 64 KiB.</p>
+<p>To avoid bothering users with such technicality, this library takes care
+of mapping memory internally from the nearest boundary.
+For example, if the granularity is 65536, and for a 10 MB long file a mapping
+is requested from 500000 to 800000,
+the memory actually mapped by the operating system is from 458752
+to a number somewhat greater than 800000,
+but the <code>offset</code> function will return 500000,
+and the <code>mapped_size</code> function will return 300000.</p>
+<p>To allow the user to take granularity into account,
+there is a global function named <code>mmf_granularity</code>,
+that returns such granularity size.</p>
+<p>It is called like in the following statement:</p>
+<pre><code>unsigned int granularity = memory_mapped_file::mmf_granularity();
+</code></pre>
+
 <h2>The <code>base_mmf</code> class</h2>
 <p>Scope: namespace <code>memory_mapped_file</code>.</p>
 <p>Abstract class representing a memory-mapped-file.
-It is the base class of <code>read_only_mmf</code> and <code>writable_mmf</code>.</p>
-<p>Its possible states are:</p>
+It is the base class of <code>read_only_mmf</code> and <code>writable_mmf</code>,
+and therefore it gathers the features common to both classes.</p>
+<p>The possible states of the instances of this class are:</p>
 <ol>
 <li>File not opened.</li>
 <li>File opened but not mapped.</li>
 <li>File opened and mapped.</li>
 </ol>
-<p>The constructor sets the object in one of the three possible states.</p>
-<p>The file can be opened only by the constructor.
-If the constructor fails to open the file, the object is useless,
-as it cannot open the file any more.</p>
-<p>The constructor can open without mapping the file,
-or open and map the file.</p>
-<p>Then the file can be mapped using the function <code>map</code>,
-or </p>
+<p>The constructor sets the object in one of the three possible states,
+as it can fail to open the underlying file or not even try to open it
+(state 1), successfully open the file but fail to map it or not even try
+to map it (state 2), or successfully open and map the file (state 3).</p>
+<p>An object in state 1 (file not opened) can pass to another state,
+by calling successfully the <code>open</code> function. If the value
+of the second argument of the call is <code>false</code>, the mapping is not even
+attempted.
+If the value of the second argument of the call is <code>true</code> or is missing,
+the mapping is attempted, but it may fail.</p>
+<p>An object in state 2 (file not mapped) can pass to state 1 (file not opened)
+by calling the <code>close</code> function, and it can pass to state 3 (file mapped)
+by calling the <code>map</code> function.</p>
+<p>An object in state 3 (file mapped) can pass to state 1 (file not opened)
+by calling the <code>close</code> function, and it can pass to state 2 (file not mapped)
+by calling the <code>unmap</code> function.</p>
 <h3>The function <code>base_mmf()</code></h3>
-<p>The only constructor.</p>
+<p>Scope: class <code>base_mmf</code>.</p>
+<p>It is the only constructor of its class.
+As this class is abstract, it can be called
+only by the constructor of the derived classes.</p>
 <h3>The function <code>~base_mmf()</code></h3>
-<p>The destructor.</p>
+<p>Scope: class <code>base_mmf</code>.</p>
+<p>It is the destructor.
+It releases every resources previously allocated by the object.</p>
 <h3>The function <code>size_t offset() const</code></h3>
 <p>Scope: class <code>base_mmf</code>.</p>
-<p>It returns the distance in bytes from the beginning of the file
-to the beginning of the portion of the file currently
-mapped to memory.
-Therefore, it returns <code>0</code> (zero) when the mapping starts at the beginning
-of the file.
-It returns <code>0</code> also when the file hasn't been opened, or when it is open
-but there is no mapping.</p>
+<p>It returns the distance in bytes
+of the beginning of the portion of the file currently mapped to memory
+from the beginning of the file. Therefore, it returns <code>0</code> (zero)
+when the mapping starts at the beginning of the file.
+It returns <code>0</code> also when the file hasn't been opened successfully,
+or when the file has been opened, but it hasn't been mapped successfully.
+therefore it cannot be used to discern if the file is open or not,
+nor to discern if the file is mapped or not.</p>
 <h3>The function <code>size_t mapped_size() const</code></h3>
+<p>Scope: class <code>base_mmf</code>.</p>
 <p>It returns the size in bytes of the portion of the file currently
 mapped to memory.
-It returns <code>0</code> when and only when the file hasn't been opened,
-or when it is open but there is no mapping.</p>
+It returns <code>0</code> when the file hasn't been opened successfully,
+or when the file has been opened, but it hasn't been mapped successfully.
+A mapping cannot have zero length, therefore this call can be used
+to discern if the file is mapped or not.</p>
 <h3>The function <code>size_t file_size() const</code></h3>
+<p>Scope: class <code>base_mmf</code>.</p>
 <p>It returns the whole size of the underlying opened file.
 Of course, it returns <code>0</code> when the opened file has zero-length,
-but also when the file hasn't been opened.</p>
+but it returns <code>0</code> also when the file hasn't been opened successfully;
+therefore it cannot be used to discern if the file is open or not.</p>
 <h3>The function <code>void unmap()</code></h3>
-<p>It cancels the current mapping.</p>
+<p>Scope: class <code>base_mmf</code>.</p>
+<p>It cancels the current mapping.
+It is called implicitly at the beginning of the <code>map</code> function,
+and by the destructor.
+It is always assumed successful.</p>
+<h3>The function <code>void close()</code></h3>
+<p>Scope: class <code>base_mmf</code>.</p>
+<p>It closes the currently open file.
+It is called implicitly at the beginning of the <code>open</code> function,
+and by the destructor.
+It is always assumed successful.</p>
 <h3>The function <code>bool is_open() const</code></h3>
-<p>It returns <code>true</code> if and only if the underlying file is mapped to memory.</p>
+<p>Scope: class <code>base_mmf</code>.</p>
+<p>It returns <code>true</code> if and only if the underlying file has been opened
+successfully.</p>
 <h3>The type name <code>HANDLE</code></h3>
+<p>Scope: class <code>base_mmf</code>.</p>
 <p>Such name represents the operating-system-dependent type
 of the handle of a file.
-For Microsoft Windows, it is a <code>void*</code>; for POSIX systems, it is <code>int</code>.</p>
+For POSIX systems, it is <code>int</code>; for Microsoft Windows, it is <code>void *</code>.</p>
 <h3>The function <code>HANDLE file_handle() const</code></h3>
+<p>Scope: class <code>base_mmf</code>.</p>
 <p>It returns the operating-system-dependent handle used internally to access
 the file.
-It may be used to access operating-system-dependent operations,
-not defined by this library, like file locking.</p>
-<h2>The <code>read_only_memory_mapped_file</code> class</h2>
-<h3><code>explicit read_only_memory_mapped_file(char const* pathname)</code></h3>
-<h3><code>char const* data() const</code></h3>
-<p>It returns the address of the beginning of the memory buffer mapped
-to a portion of the file.</p>
-<h3><code>char const* map(size_t offset = 0, size_t size = 0)</code></h3>
-<p>It creates a mapping between a portion of the file and a memory buffer.</p>
-<h2>The <code>read_write_memory_mapped_file</code> class</h2>
-<h3><code>enum e_open_mode</code></h3>
-<p>A <code>read_write_memory_mapped_file</code> must be created in one of the following
-modes:</p>
+It may be used to perform operating-system-dependent operations,
+not defined by this library, like file locking.
+If the file is open it returns a valid handle, while if the file
+is not open it returns an invalid handle, therefore it can be used
+to discern if a file is open or not, but using
+an operating-system-dependent value.</p>
+<h2>The <code>read_only_mmf</code> class</h2>
+<p>Scope: namespace <code>memory_mapped_file</code>.</p>
+<p>The instances of this class encapsulate memory-mapped-files
+that access a file only for reading it.
+Internally it opens the underlying file only for reading it.</p>
+<p>This class is derived from the class <code>base_mmf</code>.
+Therefore the documentation of such class should be read
+to see the inherited features.</p>
+<p>It has several advantages with respect to the <code>writable_mmf</code> class,
+whose instances are capable of changing a file. They are:</p>
 <ul>
-<li><code>if_exists_fail_else_create</code>: If the specified file was already existing,
-  nothing is done; otherwise it is created empty.</li>
-<li><code>if_exists_keep_else_fail</code>: If the specified file was already existing,
-  it is opened as such; otherwise nothing is done.</li>
-<li><code>if_exists_keep_else_create</code>: If the specified file was already existing,
-  it is opened as such; otherwise it is created empty.</li>
-<li><code>if_exists_truncate_else_fail</code>: If the specified file was already existing,
-  it is opened and truncated to zero size; otherwise nothing is done.</li>
-<li><code>if_exists_truncate_else_create</code>: If the specified file was already existing,
-  it is opened and truncated to zero size; otherwise it is created empty.</li>
+<li><strong>May be the only way</strong>.
+  If the operating system prevents any change to the underlying file
+  by the current user, any attempt to open such file for reading/writing,
+  like <code>writable_mmf</code> objects always do, will fail.</li>
+<li><strong>It's simpler to use</strong>.
+  There is no need to specify what to do if the file does not exist,
+  as obviously it cannot be opened.
+  It is simpler to specify what to do if the file exists,
+  as it cannot be truncated, and it is senseless to fail.</li>
+<li><strong>It's safer to use</strong>.
+  There is no risk of modifying accidentally the file.
+  Typically any attempt to change the file will cause a compilation error;
+  but if the code can be compiled, it will cause a run-time error
+  by the operating system.</li>
+<li><strong>It's more efficient</strong>.
+  Operating systems usually use more efficient buffering algorithms
+  for read-only files, than for read/write files.</li>
 </ul>
-<h3><code>explicit read_write_memory_mapped_file(char const* pathname, e_open_mode open_mode)</code></h3>
-<pre><code>#include &quot;memory_mapped_file.hpp&quot;
-#include &lt;iostream&gt;
-using namespace std;
-
-int main()
-{
-    {
-        // If the file already exists, it is not opened;
-        // otherwise, it is created empty.
-        read_write_memory_mapped_file mmf(&quot;a.txt&quot;,
-            read_write_memory_mapped_file::
-                if_exists_fail_else_create);
-    }
-    {
-        // If the file already exists, it is not opened;
-        // otherwise, it is created with a size of 60 bytes,
-        // and it is mapped all.
-        read_write_memory_mapped_file mmf(&quot;a.txt&quot;,
-            read_write_memory_mapped_file::
-                if_exists_fail_else_create, 60);
-    }
-    {
-        // If the file already exists, it is opened, but not mapped;
-        // otherwise, it is not created.
-        read_write_memory_mapped_file mmf(&quot;a.txt&quot;,
-            read_write_memory_mapped_file::
-                if_exists_keep_else_fail);
-    }
-    {
-        // If the file already exists, it is opened, and mapped all;
-        // otherwise, it is not created.
-        // For the last argument it is relevant only
-        // to be zero or non-zero.
-        read_write_memory_mapped_file mmf(&quot;a.txt&quot;,
-            read_write_memory_mapped_file::
-                if_exists_keep_else_fail, 60);
-    }
-    {
-        // If the file already exists, it is opened, but not mapped;
-        // otherwise, it is created empty.
-        read_write_memory_mapped_file mmf(&quot;a.txt&quot;,
-            read_write_memory_mapped_file::
-                if_exists_keep_else_create);
-    }
-    {
-        // If the file already exists, it is opened, and mapped all;
-        // otherwise, it is created with a size of 60 bytes,
-        // and it is mapped all.
-        read_write_memory_mapped_file mmf(&quot;a.txt&quot;,
-            read_write_memory_mapped_file::
-                if_exists_keep_else_create, 60);
-    }
-    {
-        // If the file already exists, it is opened
-        // and truncated to zero length;
-        // otherwise, it is not created.
-        read_write_memory_mapped_file mmf(&quot;a.txt&quot;,
-            read_write_memory_mapped_file::
-                if_exists_truncate_else_fail);
-    }
-    {
-        // If the file already exists, it is opened
-        // and truncated to zero length;
-        // otherwise, it is not created.
-        // This behavior is the same as the previous case,
-        // as the last argument is ignored.
-        read_write_memory_mapped_file mmf(&quot;a.txt&quot;,
-            read_write_memory_mapped_file::
-                if_exists_truncate_else_fail, 60);
-    }
-    {
-        // If the file already exists, it is opened
-        // and truncated to zero length;
-        // otherwise, it is created empty.
-        read_write_memory_mapped_file mmf(&quot;a.txt&quot;,
-            read_write_memory_mapped_file::
-                if_exists_truncate_else_create);
-    }
-    {
-        // If the file already exists, it is opened
-        // and truncated to zero length;
-        // otherwise, it is created with a size of 60 bytes,
-        // and it is mapped all.
-        read_write_memory_mapped_file mmf(&quot;a.txt&quot;,
-            read_write_memory_mapped_file::
-                if_exists_truncate_else_create, 60);
-    }
-}
+<h3><code>explicit read_only_mmf(char const* pathname, bool map_all = true)</code></h3>
+<p>Scope: class <code>read_only_mmf</code>.</p>
+<p>It is the only constructor of its class.</p>
+<p>The <code>pathname</code> argument is the relative or absolute pathname
+of the underlying file, specified according the operating system syntax.</p>
+<p>The <code>map_all</code> argument specifies if, in case the file could be successfully
+opened, such file should also be entirely mapped to memory or not.</p>
+<p>By default, it is mapped, as it is the most convenient thing to do.
+Instead, if it is needed to map the file later, or if it is needed
+to map the file a piece at a time, the value of second argument
+should be <code>false</code>.</p>
+<h3><code>void open(char const* pathname, bool map_all = true)</code></h3>
+<p>Scope: class <code>read_only_mmf</code>.</p>
+<p>It tries to open a file to be used for a read-only mapping to memory,
+and optionally to map to memory the contents of that file.</p>
+<p>The <code>pathname</code> argument is the relative or absolute pathname
+of the underlying file, specified according the operating system syntax.</p>
+<p>The <code>map_all</code> argument specifies if, in case the file could be successfully
+opened, such file should also be entirely mapped to memory or not.</p>
+<p>By default, it is mapped, as it is the most convenient thing to do.
+Instead, if it is needed to map the file later, or if it is needed
+to map the file a piece at a time, the value of second argument
+should be <code>false</code>.</p>
+<p>If the <code>open</code> function is called when the file is already open,
+it is closed first.
+Therefore, it useless to call <code>close</code> just before calling <code>open</code>.</p>
+<h3><code>char const* data() const</code></h3>
+<p>Scope: class <code>read_only_mmf</code>.</p>
+<p>It returns the address of the beginning of the read-only memory buffer mapped
+to a portion of the file.</p>
+<p>If and only if the file is not mapped,
+it returns <code>0</code> (i.e. <code>nullptr</code>).
+Therefore this call can be used to discern if the file is mapped or not.</p>
+<p>Of course, it is undefined behavior both dereferencing the null pointer,
+and accessing the referenced buffer before the beginning or after the end.</p>
+<h3><code>void map(size_t offset = 0, size_t size = 0)</code></h3>
+<p>Scope: class <code>read_only_mmf</code>.</p>
+<p>It tries to create a mapping between a portion of the file and a memory buffer.</p>
+<p>The <code>offset</code> argument specifies the distance of the beginning of the mapped
+portion from the beginning of the file. By default it is <code>0</code> (zero),
+meaning that the mapping starts at the beginning of the file.</p>
+<p>The <code>size</code> argument specifies the length of the required mapped portion
+of the file. If <code>offset + size</code> is greater than the length of the file,
+the mapping extends up to the end of the file.
+For example, if a file is 500 bytes long, and <code>object</code> is of type
+<code>read_only_mmf</code>, the following statement:</p>
+<pre><code>object.map(100, 130);
 </code></pre>
 
+<p>maps into memory the 130 bytes from position 100 included
+to position 230 excluded, counting from 0.</p>
+<p>And the following statement:</p>
+<pre><code>object.map(100, 750);
+</code></pre>
+
+<p>maps the 400 bytes from position 100 included to position 500 excluded.</p>
+<p>By default, the <code>size</code> argument is <code>0</code>, meaning a request to map
+the file up to its end.</p>
+<p>The <code>map</code> function fails in the following cases:</p>
+<ul>
+<li>the underlying file is not open (so that <code>is_open</code> returns <code>false</code>);</li>
+<li>the specified offset is equal to or greater than the file size;</li>
+<li>there is is not enough address space to map all the specified range;</li>
+<li>the operating system refuses to map the file to memory for some other reason.</li>
+</ul>
+<p>If the <code>map</code> function is successful,</p>
+<ul>
+<li>the <code>offset</code> function returns the same value passed as the <code>offset</code>
+  argument;</li>
+<li>the <code>mapped_size</code> function returns the size of the mapped portion,
+  that is not greater than the value of the <code>size</code> argument
+  (except when it is zero);</li>
+<li>the <code>data</code> function returns a non-null value, that is a valid memory address.</li>
+</ul>
+<p>Instead, if the <code>map</code> function fails, the <code>offset</code>,
+the <code>mapped_size</code>, and the <code>data</code> functions return <code>0</code>.</p>
+<p>If the <code>map</code> function is called when the file is already mapped,
+it is unmapped first.
+Therefore, it useless to call <code>unmap</code> just before calling <code>map</code>.</p>
+<h2>The <code>mmf_exists_mode</code> enumeration</h2>
+<p>Scope: namespace <code>memory_mapped_file</code>.</p>
+<p>This enumeration specifies what to do when a <code>writable_mmf</code> object
+is created and the underlying file already exists.</p>
+<p>There are four cases:</p>
+<ul>
+<li>
+<p><code>if_exists_fail</code>: the file is not opened,
+  so that if later <code>is_open</code> is called, it will return <code>false</code>,
+  and of course if <code>mapped_size</code> and <code>data</code> are called, they will return <code>0</code>.</p>
+</li>
+<li>
+<p><code>if_exists_just_open</code>: the file is opened but not mapped,
+  so that if the open is successful and later <code>is_open</code> is called,
+  it will return <code>true</code>, but <code>mapped_size</code> and <code>data</code> will however return <code>0</code>.</p>
+</li>
+<li>
+<p><code>if_exists_map_all</code>: the file is opened and mapped all to memory,
+  so that if the open is successful and later <code>is_open</code> is called,
+  it will return <code>true</code>, and if the map is also successful and later
+  <code>mapped_size</code> and <code>data</code> are called they will return non-null values.</p>
+</li>
+<li>
+<p><code>if_exists_truncate</code>: the file is opened and truncated,
+  so that if the open is successful and later <code>is_open</code> is called,
+  it will return <code>true</code>, but <code>mapped_size</code> and <code>data</code> will however return <code>0</code>.</p>
+</li>
+</ul>
+<h2>The <code>mmf_doesnt_exist_mode</code> enumeration</h2>
+<p>Scope: namespace <code>memory_mapped_file</code>.</p>
+<p>This enumeration specifies what to do when a <code>writable_mmf</code> object
+is created and the underlying file does not exist yet.</p>
+<p>There are only two cases:</p>
+<ul>
+<li><code>if_doesnt_exist_fail</code>: the file is not created,
+  so that if later <code>is_open</code> is called, it will return <code>false</code>,
+  and of course if <code>mapped_size</code> and <code>data</code> are called, they will return <code>0</code>.</li>
+<li><code>if_doesnt_exist_create</code>, the file is created empty,
+  so that if the creation is successful and later <code>is_open</code> is called,
+  it will return <code>true</code>, but <code>mapped_size</code> and <code>data</code> will however return <code>0</code>.</li>
+</ul>
+<h2>The <code>writable_mmf</code> class</h2>
+<p>Scope: namespace <code>memory_mapped_file</code>.</p>
+<p>The instances of this class encapsulate memory-mapped-files
+that access a file for reading or writing it.
+Internally it opens the underlying file for reading or writing it.</p>
+<p>This class is derived from the <code>base_mmf</code> class.
+Therefore see the documentation of such class to see the inherited features.</p>
+<p>In addition, this class is rather similar to the <code>read_only_mmf</code> class,
+therefore here only the difference from such class are specified.</p>
+<h3><code>explicit writable_mmf(char const* pathname, mmf_exists_mode exists_mode, mmf_doesnt_exist_mode doesnt_exist_mode)</code></h3>
+<p>Scope: class <code>writable_mmf</code>.</p>
+<p>It is the only constructor of this class.</p>
+<p>For more information, look at the description of the constructors
+of <code>base_mmf</code> and of <code>read_only_mmf</code>,
+and at the description of the enumerations <code>mmf_exists_mode</code>
+and <code>mmf_doesnt_exist_mode</code>.</p>
+<p>The <code>exists_mode</code> argument has four possible values,
+and the <code>doesnt_exist_mode</code> has two possible values,
+and therefore there are the following eight possible construction cases:</p>
+<ul>
+<li><code>writable_mmf(pathname, if_exists_fail, if_doesnt_exist_fail)</code>:
+  Fail always. Of course it is senseless.</li>
+<li><code>writable_mmf(pathname, if_exists_fail, if_doesnt_exist_create)</code>:
+  Fail or create. To be used to copy a file without overwriting
+  an existing file.</li>
+<li><code>writable_mmf(pathname, if_exists_just_open, if_doesnt_exist_fail)</code>:
+  Open or fail. Similar to <code>read_only_mmf(pathname, false)</code>.</li>
+<li><code>writable_mmf(pathname, if_exists_just_open, if_doesnt_exist_create)</code>:
+  Open or create. To be used to modify a file piece-wise,
+  by creating it if not yet existing.</li>
+<li><code>writable_mmf(pathname, if_exists_map_all, if_doesnt_exist_fail)</code>:
+  Map or fail. Similar to <code>read_only_mmf(pathname)</code>.</li>
+<li><code>writable_mmf(pathname, if_exists_map_all, if_doesnt_exist_create)</code>:
+  Map or create. To be used to modify a file as a whole,
+  by creating it if not yet existing.</li>
+<li><code>writable_mmf(pathname, if_exists_truncate, if_doesnt_exist_fail)</code>:
+  Truncate or fail. To be used to overwrite an existing file. Rarely useful.</li>
+<li><code>writable_mmf(pathname, if_exists_truncate, if_doesnt_exist_create)</code>:
+  Truncate or create. To be used to copy a file even overwriting
+  an existing file.</li>
+</ul>
 <h3><code>char* data()</code></h3>
-<h3><code>char* map(size_t offset = 0, size_t size = 0)</code></h3>
+<p>Scope: class <code>writable_mmf</code>.</p>
+<h3><code>void open(char const* pathname, mmf_exists_mode exists_mode = if_exists_fail, mmf_doesnt_exist_mode doesnt_exist_mode = if_doesnt_exist_create)</code></h3>
+<p>Scope: class <code>writable_mmf</code>.</p>
+<p>It tries to open a file to be used for a read-write mapping to memory,
+and optionally to map to memory the contents of that file.</p>
+<p>It is similar to the function with the same name of the <code>read_only_mmf</code> class,
+and to the constructor of this class.</p>
+<h3><code>void map(size_t offset = 0, size_t size = 0)</code></h3>
+<p>Scope: class <code>writable_mmf</code>.</p>
+<p>It is has the same syntax and semantics of the function with the same name
+of the <code>read_only_mmf</code> class.</p>
 <h3><code>bool flush()</code></h3>
+<p>Scope: class <code>writable_mmf</code>.</p>
 <p>It copies all the changes to the file system, ensuring that
 they are persistent.</p>
 <p>Actually, when a byte is modified in a memory-mapped file, that change
 may be applied much later to the underlying file, possibly only when
 the memory-mapped file is closed.</p>
-<p>To ensure that every change is actually applied to the storage device,
+<p>To ensure that every previous change is actually applied to the storage device,
 it is possible to close and reopen the memory-mapped file.
 The <code>flush</code> operation achieves the same effect much more efficiently.</p>
 <p>If returns <code>true</code> if the operation succeeds, otherwise <code>false</code>.</p>
