@@ -13,7 +13,7 @@ by POSIX-compliant operating systems and by Microsoft Windows.
 This package is made of one HTML documentation file,
 and two C++ files:
 
-* `manual.html`: This document, in HTML format.
+* `README.md`: This document.
 * `memory_mapped_file.hpp`: Header file, to be included by every source file
   that needs to read or to write a memory-mapped file.
 * `memory_mapped_file.cpp`: Implementation file, to be compiled separately
