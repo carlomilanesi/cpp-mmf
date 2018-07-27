@@ -29,7 +29,7 @@ namespace memory_mapped_file
         granularity_(mmf_granularity()),
     #if defined(_WIN32)
         file_handle_(INVALID_HANDLE_VALUE),
-        file_mapping_handle_(INVALID_HANDLE_VALUE)
+        file_mapping_handle_(NULL)
     #else
         file_handle_(-1)
     #endif
@@ -45,8 +45,11 @@ namespace memory_mapped_file
     {
         unmap();
     #if defined(_WIN32)
-        ::CloseHandle(file_handle_);
-        file_handle_ = (void*)-1;
+        if (file_handle_ != INVALID_HANDLE_VALUE)
+        {
+            ::CloseHandle(file_handle_);
+            file_handle_ = INVALID_HANDLE_VALUE;
+        }
     #else
         ::close(file_handle_);
         file_handle_ = -1;
@@ -63,7 +66,7 @@ namespace memory_mapped_file
     #if defined(_WIN32)
             ::UnmapViewOfFile(real_data);
             ::CloseHandle(file_mapping_handle_);
-            file_mapping_handle_ = INVALID_HANDLE_VALUE;
+            file_mapping_handle_ = NULL;
     #else
             size_t real_mapped_size = mapped_size_ + (data_ - real_data);
             ::munmap(const_cast<char*>(real_data), real_mapped_size);
@@ -77,9 +80,12 @@ namespace memory_mapped_file
     size_t base_mmf::query_file_size_()
     {
     #if defined(_WIN32)
-        DWORD high_size;
-        DWORD low_size = GetFileSize(file_handle_, &high_size);
-        return (size_t(high_size) << 32) | low_size;
+        LARGE_INTEGER file_size;
+        if (file_handle_ == INVALID_HANDLE_VALUE ||
+            !GetFileSizeEx(file_handle_, &file_size))
+            return 0;
+
+        return static_cast<size_t>(file_size.QuadPart);
     #else
         struct stat sbuf;
         if (::fstat(file_handle_, &sbuf) == -1) return 0;
@@ -97,7 +103,7 @@ namespace memory_mapped_file
         if (! pathname) return;
         if (is_open()) close();
     #if defined(_WIN32)
-        file_handle_ = ::CreateFile(pathname, GENERIC_READ,
+        file_handle_ = ::CreateFileA(pathname, GENERIC_READ,
             FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
         if (file_handle_ == INVALID_HANDLE_VALUE) return;
@@ -120,11 +126,10 @@ namespace memory_mapped_file
         size_t real_offset = offset / granularity_ * granularity_;
     #if defined(_WIN32)
         file_mapping_handle_ = ::CreateFileMapping(
-            file_handle_, 0, PAGE_READONLY, (offset + mapping_size) >> 32,
-            (offset + mapping_size) & 0xFFFFFFFF, 0);
-        if (file_mapping_handle_ == INVALID_HANDLE_VALUE) return;
+            file_handle_, 0, PAGE_READONLY, 0, 0, 0);
+        if (file_mapping_handle_ == NULL) return;
         char* real_data = static_cast<char*>(::MapViewOfFile(
-            file_mapping_handle_, FILE_MAP_READ, real_offset >> 32,
+            file_mapping_handle_, FILE_MAP_READ, static_cast<DWORD>((LONGLONG)real_offset >> 32),
             real_offset & 0xFFFFFFFF, offset - real_offset + mapping_size));
         if (! real_data) return;
     #else
@@ -173,7 +178,7 @@ namespace memory_mapped_file
             else return;
         }
 
-        file_handle_ = ::CreateFile(pathname, GENERIC_READ | GENERIC_WRITE,
+        file_handle_ = ::CreateFileA(pathname, GENERIC_READ | GENERIC_WRITE,
             FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
             win_open_mode, FILE_ATTRIBUTE_NORMAL, 0);
         if (file_handle_ == INVALID_HANDLE_VALUE) return;
@@ -212,11 +217,11 @@ namespace memory_mapped_file
         size_t real_offset = offset / granularity_ * granularity_;
     #if defined(_WIN32)
         file_mapping_handle_ = ::CreateFileMapping(
-            file_handle_, 0, PAGE_READWRITE, (offset + mapping_size) >> 32,
+            file_handle_, 0, PAGE_READWRITE, static_cast<DWORD>((LONGLONG)real_offset >> 32),
             (offset + mapping_size) & 0xFFFFFFFF, 0);
-        if (file_mapping_handle_ == INVALID_HANDLE_VALUE) return;
+        if (file_mapping_handle_ == NULL) return;
         char* real_data = static_cast<char*>(::MapViewOfFile(
-            file_mapping_handle_, FILE_MAP_WRITE, real_offset >> 32,
+            file_mapping_handle_, FILE_MAP_WRITE, static_cast<DWORD>((LONGLONG)real_offset >> 32),
             real_offset & 0xFFFFFFFF, offset - real_offset + mapping_size));
         if (! real_data) return;    
     #else
