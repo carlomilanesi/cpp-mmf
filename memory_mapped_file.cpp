@@ -97,7 +97,7 @@ namespace memory_mapped_file
         if (! pathname) return;
         if (is_open()) close();
     #if defined(_WIN32)
-        file_handle_ = ::CreateFile(pathname, GENERIC_READ,
+        file_handle_ = ::CreateFileA(pathname, GENERIC_READ,
             FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
         if (file_handle_ == INVALID_HANDLE_VALUE) return;
@@ -173,7 +173,7 @@ namespace memory_mapped_file
             else return;
         }
 
-        file_handle_ = ::CreateFile(pathname, GENERIC_READ | GENERIC_WRITE,
+        file_handle_ = ::CreateFileA(pathname, GENERIC_READ | GENERIC_WRITE,
             FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
             win_open_mode, FILE_ATTRIBUTE_NORMAL, 0);
         if (file_handle_ == INVALID_HANDLE_VALUE) return;
